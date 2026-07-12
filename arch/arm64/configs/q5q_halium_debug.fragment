@@ -1,0 +1,32 @@
+# Optional q5q Halium development and early-boot diagnostics.
+#
+# This fragment is intentionally separate from q5q_halium.fragment. It is for
+# recovery-side and test kernels, not a daily Android production kernel. Always
+# verify the final merged .config after olddefconfig because Kconfig may remove
+# symbols whose dependencies are not satisfied.
+
+# Second-kernel experiments
+CONFIG_KEXEC=y
+CONFIG_KEXEC_FILE=y
+CONFIG_CRASH_DUMP=y
+CONFIG_PROC_VMCORE=y
+
+# Preserve evidence across early crashes and reboots
+CONFIG_PSTORE=y
+CONFIG_PSTORE_RAM=y
+CONFIG_PSTORE_CONSOLE=y
+CONFIG_PSTORE_PMSG=y
+CONFIG_PSTORE_FTRACE=y
+
+# Runtime diagnostics
+CONFIG_MAGIC_SYSRQ=y
+CONFIG_IKCONFIG=y
+CONFIG_IKCONFIG_PROC=y
+CONFIG_KALLSYMS=y
+CONFIG_KALLSYMS_ALL=y
+CONFIG_DEBUG_FS=y
+CONFIG_DYNAMIC_DEBUG=y
+
+# Make failures leave a deterministic reboot path while testing. The actual
+# timeout can still be overridden by the kernel command line.
+CONFIG_PANIC_TIMEOUT=10
