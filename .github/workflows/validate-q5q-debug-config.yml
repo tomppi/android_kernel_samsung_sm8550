@@ -72,4 +72,5 @@ jobs:
           path: |
             out/.config
             missing-config.txt
+          include-hidden-files: true
           if-no-files-found: error
