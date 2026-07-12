@@ -36,7 +36,11 @@ jobs:
             CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
 
       - name: Verify requested fragment symbols
+        id: verify_config
+        shell: bash
         run: |
+          set +e
+          : > missing-config.txt
           for fragment in \
             arch/arm64/configs/q5q_halium.fragment \
             arch/arm64/configs/q5q_halium_debug.fragment; do
@@ -46,15 +50,26 @@ jobs:
                 *) continue ;;
               esac
               grep -qxF "$config" out/.config || {
-                echo "Requested configuration did not survive olddefconfig: $config" >&2
-                exit 1
+                echo "$config" | tee -a missing-config.txt >&2
               }
             done < "$fragment"
           done
 
-      - name: Preserve merged configuration
+          if [[ -s missing-config.txt ]]; then
+            echo "The following requested symbols did not survive olddefconfig:" >&2
+            cat missing-config.txt >&2
+            echo "status=1" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          echo "status=0" >> "$GITHUB_OUTPUT"
+
+      - name: Preserve merged configuration and diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: q5q-debug-config
-          path: out/.config
+          path: |
+            out/.config
+            missing-config.txt
           if-no-files-found: error
