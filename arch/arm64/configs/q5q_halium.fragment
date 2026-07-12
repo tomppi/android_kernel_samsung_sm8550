@@ -1,6 +1,7 @@
 # Halium/Droidian requirements layered on top of q5q_defconfig.
 # Kept as a fragment so the Lineage defconfig can continue tracking upstream.
 
+CONFIG_SYSVIPC=y
 CONFIG_PID_NS=y
 CONFIG_UTS_NS=y
 CONFIG_IPC_NS=y
@@ -26,7 +27,6 @@ CONFIG_BLK_DEV_LOOP_MIN_COUNT=16
 CONFIG_VT=y
 CONFIG_VT_CONSOLE=y
 CONFIG_UNIX98_PTYS=y
-CONFIG_DEVPTS_MULTIPLE_INSTANCES=y
 
 CONFIG_ANDROID=y
 CONFIG_ANDROID_BINDER_IPC=y
