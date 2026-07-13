@@ -1,0 +1,76 @@
+name: Validate q5q debug config
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  config:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Install Kconfig dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            bc bison flex gcc-aarch64-linux-gnu libelf-dev libssl-dev make
+
+      - name: Generate q5q configuration
+        run: |
+          mkdir -p out
+          make O="$PWD/out" ARCH=arm64 \
+            CROSS_COMPILE=aarch64-linux-gnu- q5q_defconfig
+          scripts/kconfig/merge_config.sh \
+            -m -O "$PWD/out" \
+            "$PWD/out/.config" \
+            arch/arm64/configs/q5q_halium.fragment \
+            arch/arm64/configs/q5q_halium_debug.fragment
+          make O="$PWD/out" ARCH=arm64 \
+            CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+
+      - name: Verify requested fragment symbols
+        id: verify_config
+        shell: bash
+        run: |
+          set +e
+          : > missing-config.txt
+          for fragment in \
+            arch/arm64/configs/q5q_halium.fragment \
+            arch/arm64/configs/q5q_halium_debug.fragment; do
+            while IFS= read -r config; do
+              case "$config" in
+                CONFIG_*=*) ;;
+                *) continue ;;
+              esac
+              grep -qxF "$config" out/.config || {
+                echo "$config" | tee -a missing-config.txt >&2
+              }
+            done < "$fragment"
+          done
+
+          if [[ -s missing-config.txt ]]; then
+            echo "The following requested symbols did not survive olddefconfig:" >&2
+            cat missing-config.txt >&2
+            echo "status=1" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          echo "status=0" >> "$GITHUB_OUTPUT"
+
+      - name: Preserve merged configuration and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: q5q-debug-config
+          path: |
+            out/.config
+            missing-config.txt
+          include-hidden-files: true
+          if-no-files-found: error
