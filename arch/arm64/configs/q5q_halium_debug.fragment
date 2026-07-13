@@ -5,6 +5,19 @@
 # verify the final merged .config after olddefconfig because Kconfig may remove
 # symbols whose dependencies are not satisfied.
 
+# Android vendor trace hooks are used unconditionally by several Qualcomm and
+# Android common-kernel sources in this tree. Keep the tracepoint backing and
+# vendor/OEM structure padding explicit for this development configuration.
+CONFIG_TRACEPOINTS=y
+CONFIG_ANDROID=y
+CONFIG_ANDROID_VENDOR_HOOKS=y
+CONFIG_ANDROID_VENDOR_OEM_DATA=y
+
+# Recovery and second-kernel testing do not use suspend-to-disk. Disabling it
+# avoids compiling the Android hibernation handoff path while retaining normal
+# suspend-to-RAM support.
+# CONFIG_HIBERNATION is not set
+
 # Second-kernel experiments
 CONFIG_KEXEC=y
 CONFIG_KEXEC_FILE=y
